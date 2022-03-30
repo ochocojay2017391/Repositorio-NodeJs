@@ -33,68 +33,12 @@ function AgregarUsuario(req, res) {
     }
 }
 
-function Login(req, res) {
-
-    var parametros = req.body;
-
-    Usuarios.findOne({ email: parametros.email }, (err, usuarioEncontrado) => {
-        if (err) return res.status(500).send({ mensaje: 'Error en la peticion' });
-        if (usuarioEncontrado) {
-            bcrypt.compare(parametros.password, usuarioEncontrado.password,
-                (err, verificacionPassword) => {
-                    if (verificacionPassword) {
-
-                        if (parametros.obtenerToken === 'true') {
-
-                            return res.status(200).send({ token: jwt.crearToken(usuarioEncontrado) })
-
-                        } else {
-                            usuarioEncontrado.password = undefined;
-                            return res.status(200).send({ usuario: usuarioEncontrado })
-                        }
-                    } else {
-                        return res.status(500).send({ mensaje: 'La contraseña es incorrecta' });
-                    }
-                })
-        } else {
-            return res.status(500).send({ mensaje: 'El correo no esta asignado' })
-        }
-    })
-}
-
-function editarRolUsuario(req, res) {
-
-    if (req.user.rol == "ROL_CLIENTE") return res.status(500).send({ mensaje: 'Este rol no tiene acceso' });
-
-    var datos = req.body;
-    var idCliente = req.params.ID;
-
-    Usuarios.findById(idCliente, (error, clienteEncontrado) => {
-        if (clienteEncontrado == null) {
-            return res.status(500).send({ Error: "Este cliente no existe." });
-        } else if (clienteEncontrado.rol == "ROL_ADMIN") {
-            return res.status(500).send({ Error: "No se puede editar el rol de otro Administrador" });
-        } else {
-            if (datos.rol) {
-                Usuarios.findByIdAndUpdate(idCliente, datos, { new: true }, (error, rolCambiado) => {
-                    if (error)
-                        return res.status(500).send({ Error: "Error en la peticion." });
-                    if (!rolCambiado)
-                        return res.status(404).send({ Error: "Revisar si esta registrado e intentar de nuevo" });
-
-                    return res.status(200).send({ Rol_actualizado: rolCambiado });
-                });
-            } else {
-                return res.status(500).send({ Error: "Ingrese el rol que desea establecer al cliente." });
-            }
-        }
-    });
-}
 
 function editarUsuarios(req, res) {
 
     // NO PUEDE EDITAR EL CLIENTE
-    if (req.user.rol == "ROL_CLIENTE") return res.status(500).send({ mensaje: 'Este rol no tiene acceso' });
+
+    //if (req.user.rol == "ROL_CLIENTE") return res.status(500).send({ mensaje: 'Este rol no tiene acceso' });
 
     var idUser = req.params.idUsuario;
     var parametros = req.body;
@@ -103,53 +47,51 @@ function editarUsuarios(req, res) {
         if (err) return res.status(500).send({ mensaje: "No existe el usuario" });
         if (!usuarioEncontrado) return res.status(404).send({ mensaje: "No existe el usuario" })
 
-        if (usuarioEncontrado.rol == 'ROL_CLIENTE') {
+        //if (usuarioEncontrado.rol == 'ROL_CLIENTE') {
 
-            Usuarios.findByIdAndUpdate(idUser, parametros, { new: true },
+        Usuarios.findByIdAndUpdate(idUser, parametros, { new: true },
                 (err, usuarioActualizado) => {
                     if (err) return res.status(500).send({ mensaje: 'Error en la peticion' });
                     if (!usuarioActualizado) return res.status(500).send({ mensaje: 'Error al momento de editar' });
 
                     return res.status(200).send({ usuario: usuarioActualizado })
                 })
-        } else {
-            return res.status(500).send({ mensaje: "No cuentas con los permisos para editar" });
-        }
-    })
+            //} else {
+        return res.status(500).send({ mensaje: "No se pudo editar" });
+
+    });
 }
 
 function eliminarUsuarios(req, res) {
 
     // NO PUEDE ELIMINAR CLIENTE
-    if (req.user.rol == "ROL_CLIENTE") return res.status(500).send({ mensaje: 'Este rol no tiene acceso' });
+    //if (req.user.rol == "ROL_CLIENTE") return res.status(500).send({ mensaje: 'Este rol no tiene acceso' });
 
     var idUser = req.params.idUsuario;
 
     Usuarios.findOne({ _id: idUser }, (err, usuarioEncontrado) => {
         if (err) return res.status(500).send({ mensaje: "No existe el usuario" });
         if (!usuarioEncontrado) return res.status(404).send({ mensaje: "No existe el usuario" })
-        if (usuarioEncontrado.rol == "ROL_CLIENTE") {
+            //if (usuarioEncontrado.rol == "ROL_CLIENTE") {
 
-            Usuarios.findByIdAndDelete(idUser, (err, usuarioEliminado) => {
+        Usuarios.findByIdAndDelete(idUser, (err, usuarioEliminado) => {
                 if (err) return res.status(500).send({ mensaje: "Error, el usuario no existe" });
                 if (!usuarioEliminado) return res.status(404).send({ mensaje: "Error, el usuario no existe" })
                 return res.status(200).send({ usuario: usuarioEliminado });
 
             })
-        } else {
+            //} else {
 
-            return res.status(500).send({ mensaje: 'No cuentas con los permisos para editar' });
+        return res.status(500).send({ mensaje: 'No cuentas con los permisos para editar' });
 
-        }
-
-    })
+    });
 }
+
+
 
 
 module.exports = {
     AgregarUsuario,
-    Login,
-    editarRolUsuario,
     editarUsuarios,
     eliminarUsuarios
 }
